@@ -12,6 +12,11 @@ RUN apt-get update && apt-get install -y \
 
 # Copy file requirements và cài đặt dependencies
 COPY requirements.txt .
+
+# Install PyTorch CPU version explicitly to reduce size and RAM usage (Critical for Render Free Tier)
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Cài đặt thêm spaces (cần thiết cho Hugging Face Spaces compatibility) và numpy wheel nếu cần
 # Cài đặt thêm spaces (cần thiết cho Hugging Face Spaces compatibility) và numpy wheel nếu cần
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir spaces

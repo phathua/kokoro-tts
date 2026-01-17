@@ -126,6 +126,19 @@ CHOICES = {
 for v in CHOICES.values():
     pipelines[v[0]].load_voice(v)
 
+def get_sample_audio(voice):
+    try:
+        prefix, name = voice.split('_')
+        region = 'US' if prefix.startswith('a') else 'GB'
+        gender = 'Female' if 'f' in prefix else 'Male'
+        filename = f"{name.capitalize()}.wav"
+        path = os.path.join("SAMPLES", region, gender, filename)
+        if os.path.exists(path):
+            return path
+        return None
+    except:
+        return None
+
 TOKEN_NOTE = '''
 💡 Customize pronunciation with Markdown link syntax and /slashes/ like `[Kokoro](/kˈOkəɹO/)`
 
@@ -174,13 +187,15 @@ with gr.Blocks() as app:
         with gr.Column():
             text = gr.Textbox(label='Input Text', info=f"Up to ~500 characters per Generate, or {'∞' if CHAR_LIMIT is None else CHAR_LIMIT} characters per Stream")
             with gr.Row():
-                voice = gr.Dropdown(list(CHOICES.items()), value='af_heart', label='Voice', info='Quality and availability vary by language')
+                voice = gr.Dropdown(list(CHOICES.items()), value='af_heart', label='Voice', info='Quality and availability vary by language', scale=3)
+                sample_audio = gr.Audio(label='Sample', value=get_sample_audio('af_heart'), interactive=False, show_download_button=False, container=False, scale=1)
                 use_gpu = gr.Dropdown(
                     [('ZeroGPU 🚀', True), ('CPU 🐌', False)],
                     value=CUDA_AVAILABLE,
                     label='Hardware',
                     info='GPU is usually faster, but has a usage quota',
-                    interactive=CUDA_AVAILABLE
+                    interactive=CUDA_AVAILABLE,
+                    scale=2
                 )
             speed = gr.Slider(minimum=0.5, maximum=2, value=1, step=0.1, label='Speed')
             random_btn = gr.Button('🎲 Random Quote 💬', variant='secondary')
@@ -192,11 +207,12 @@ with gr.Blocks() as app:
     random_btn.click(fn=get_random_quote, inputs=[], outputs=[text], api_name=API_NAME)
     gatsby_btn.click(fn=get_gatsby, inputs=[], outputs=[text], api_name=API_NAME)
     frankenstein_btn.click(fn=get_frankenstein, inputs=[], outputs=[text], api_name=API_NAME)
-    generate_btn.click(fn=generate_first, inputs=[text, voice, speed, use_gpu], outputs=[out_audio, out_ps], api_name=API_NAME)
+    generate_btn.click(fn=generate_first, inputs=[text, voice, speed, use_gpu], outputs=[out_audio, out_ps], api_name="tts")
     tokenize_btn.click(fn=tokenize_first, inputs=[text, voice], outputs=[out_ps], api_name=API_NAME)
     stream_event = stream_btn.click(fn=generate_all, inputs=[text, voice, speed, use_gpu], outputs=[out_stream], api_name=API_NAME)
     stop_btn.click(fn=None, cancels=stream_event)
     predict_btn.click(fn=predict, inputs=[text, voice, speed], outputs=[out_audio], api_name=API_NAME)
+    voice.change(fn=get_sample_audio, inputs=[voice], outputs=[sample_audio])
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
