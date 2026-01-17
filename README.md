@@ -10,6 +10,7 @@ pinned: true
 license: apache-2.0
 short_description: Upgraded to v1.0!
 disable_embedding: true
+python_version: 3.11
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
